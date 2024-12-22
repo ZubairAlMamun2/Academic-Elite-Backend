@@ -3,7 +3,7 @@ const cors=require('cors')
 require('dotenv').config()
 const app=express();
 const port=process.env.PORT||5000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
 app.use(cors());
@@ -40,6 +40,16 @@ async function run() {
         // console.log(addCampaign)
         const result = await assignmentDB.insertOne(addCampaign);
         res.send(result)
+    })
+
+    app.delete("/assignment/:id", async(req,res)=>{
+        const id=req.params.id
+        console.log("please delete this user",id)
+        const query = { _id: new ObjectId(id) };
+        const deleteResult = await assignmentDB.deleteOne(query);
+
+        res.send(deleteResult)
+        
     })
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();

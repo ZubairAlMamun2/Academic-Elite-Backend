@@ -35,10 +35,38 @@ async function run() {
         res.send(allValues)
     })
 
+    app.get("/assignment/:id", async(req,res)=>{
+        const id=req.params.id
+        // console.log("please delete this user",id)
+        const query = { _id: new ObjectId(id) };
+        const user = await assignmentDB.findOne(query);
+        res.send(user)
+        
+    })
+
     app.post("/addnewassignment",async(req,res)=>{
         const addCampaign =req.body;
         // console.log(addCampaign)
         const result = await assignmentDB.insertOne(addCampaign);
+        res.send(result)
+    })
+
+    app.put("/update/:id", async(req,res)=>{
+        const id=req.params.id
+        const user=req.body
+        const filter = { _id: new ObjectId(id) };
+        const options = { upsert: true };
+        const updateDoc = {
+            $set: {
+              title:user.title,
+              photo:user.photo,
+              type:user.type,
+              marks:user.marks,
+              description:user.description
+            },
+          };
+        // console.log("please update this user",id,updateuser)
+        const result = await assignmentDB.updateOne(filter, updateDoc, options);
         res.send(result)
     })
 
@@ -51,6 +79,8 @@ async function run() {
         res.send(deleteResult)
         
     })
+
+    
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     // Send a ping to confirm a successful connection

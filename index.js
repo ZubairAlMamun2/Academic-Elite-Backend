@@ -29,6 +29,12 @@ async function run() {
 
     const assignmentDB = client.db("AssignmentDB").collection("assignments");
 
+    app.get("/allassignments",async(req,res)=>{
+        const cursor = assignmentDB.find({});
+        const allValues = await cursor.toArray();
+        res.send(allValues)
+    })
+
     app.post("/addnewassignment",async(req,res)=>{
         const addCampaign =req.body;
         // console.log(addCampaign)

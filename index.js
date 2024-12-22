@@ -28,6 +28,7 @@ async function run() {
   try {
 
     const assignmentDB = client.db("AssignmentDB").collection("assignments");
+    const takeassignmentDB = client.db("AssignmentDB").collection("takeassignment");
 
     app.get("/allassignments",async(req,res)=>{
         const cursor = assignmentDB.find({});
@@ -48,6 +49,13 @@ async function run() {
         const addCampaign =req.body;
         // console.log(addCampaign)
         const result = await assignmentDB.insertOne(addCampaign);
+        res.send(result)
+    })
+
+    app.post("/takeassignment",async(req,res)=>{
+        const assignment =req.body;
+        // console.log(addCampaign)
+        const result = await takeassignmentDB.insertOne(assignment);
         res.send(result)
     })
 

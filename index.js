@@ -8,6 +8,7 @@ const port=process.env.PORT||5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
+
 app.use(cors({
     origin: 'http://localhost:5173', // Allow requests from this frontend
     credentials: true, // Allow cookies and authentication headers
@@ -168,6 +169,30 @@ async function run() {
         res.send(deleteResult)
         
     })
+
+
+    // new route
+
+    app.get('/assignments', async (req, res) => {
+        try {
+            const { type, search } = req.query;
+
+        let query = {};
+        if (type) query.type = type;
+        if (search) {
+            query.title = { $regex: search, $options: "i" }; // Case-insensitive search
+        }
+
+        const assignments = await assignmentDB.find(query).toArray();
+        res.status(200).send(assignments);
+        console.log(assignments)
+        } catch (error) {
+            console.error(error);
+            res.status(500).send({ message: 'Error retrieving assignments' });
+        }
+    });
+
+
 
     
     // Connect the client to the server	(optional starting in v4.7)

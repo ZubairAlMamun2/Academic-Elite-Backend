@@ -1,13 +1,36 @@
 const express=require('express');
 const cors=require('cors')
 require('dotenv').config()
+const cookieParser=require('cookie-parser')
+const jwt = require('jsonwebtoken');
 const app=express();
 const port=process.env.PORT||5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:5173', // Allow requests from this frontend
+    credentials: true, // Allow cookies and authentication headers
+  }));
 app.use(express.json());
+app.use(cookieParser());
+
+const verifyToken = (req, res, next) => {
+    const token=req?.cookies?.token
+    console.log('This is token',{token})
+    if (!token) {
+        return res.status(401).send({ message: 'unauthorized access' });
+    }
+
+    // verify the token
+    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(401).send({ message: 'unauthorized access' });
+        }
+        req.user = decoded;
+        next();
+    })
+}
 
 
 
@@ -30,13 +53,41 @@ async function run() {
     const assignmentDB = client.db("AssignmentDB").collection("assignments");
     const takeassignmentDB = client.db("AssignmentDB").collection("takeassignment");
 
+
+    app.post('/jwt',async(req,res)=>{
+        const user=req.body;
+        const token=jwt.sign(user,process.env.JWT_SECRET,{expiresIn:'1h'})
+        // console.log('tis is dskdl',token )
+        res.cookie('token', token, { httpOnly: true, secure:false });
+        res.send({success:true});
+    })
+    app.post('/logout',(req,res)=>{
+        res.clearCookie('token',  { httpOnly: true, secure:false });
+        res.send({success:true});
+    })
+
     app.get("/allassignments",async(req,res)=>{
         const cursor = assignmentDB.find({});
         const allValues = await cursor.toArray();
         res.send(allValues)
     })
 
-    app.get("/assignment/:id", async(req,res)=>{
+    app.get("/pendingassignment",verifyToken,async(req,res)=>{
+        const cursor = takeassignmentDB.find({});
+        const allValues = await cursor.toArray();
+        console.log('cookies',req.cookies)
+
+        res.send(allValues)
+    })
+    app.get("/attemptassignment",verifyToken,async(req,res)=>{
+        const cursor = takeassignmentDB.find({});
+        const allValues = await cursor.toArray();
+        res.send(allValues)
+    })
+
+    
+
+    app.get("/assignment/:id",verifyToken, async(req,res)=>{
         const id=req.params.id
         // console.log("please delete this user",id)
         const query = { _id: new ObjectId(id) };
@@ -45,21 +96,21 @@ async function run() {
         
     })
 
-    app.post("/addnewassignment",async(req,res)=>{
+    app.post("/addnewassignment",verifyToken,async(req,res)=>{
         const addCampaign =req.body;
         // console.log(addCampaign)
         const result = await assignmentDB.insertOne(addCampaign);
         res.send(result)
     })
 
-    app.post("/takeassignment",async(req,res)=>{
+    app.post("/takeassignment",verifyToken,async(req,res)=>{
         const assignment =req.body;
         // console.log(addCampaign)
         const result = await takeassignmentDB.insertOne(assignment);
         res.send(result)
     })
 
-    app.put("/update/:id", async(req,res)=>{
+    app.put("/update/:id",verifyToken, async(req,res)=>{
         const id=req.params.id
         const user=req.body
         const filter = { _id: new ObjectId(id) };
@@ -78,7 +129,7 @@ async function run() {
         res.send(result)
     })
 
-    app.delete("/assignment/:id", async(req,res)=>{
+    app.delete("/assignment/:id",async(req,res)=>{
         const id=req.params.id
         console.log("please delete this user",id)
         const query = { _id: new ObjectId(id) };

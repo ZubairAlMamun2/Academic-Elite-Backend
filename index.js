@@ -79,6 +79,17 @@ async function run() {
 
         res.send(allValues)
     })
+
+
+    app.get("/pendingassignment/:id",verifyToken, async(req,res)=>{
+        const id=req.params.id
+        // console.log("please delete this user",id)
+        const query = { _id: new ObjectId(id) };
+        const assignment = await takeassignmentDB.findOne(query);
+        res.send(assignment)
+        
+    })
+
     app.get("/attemptassignment",verifyToken,async(req,res)=>{
         const cursor = takeassignmentDB.find({});
         const allValues = await cursor.toArray();
@@ -95,6 +106,8 @@ async function run() {
         res.send(user)
         
     })
+
+
 
     app.post("/addnewassignment",verifyToken,async(req,res)=>{
         const addCampaign =req.body;
@@ -126,6 +139,23 @@ async function run() {
           };
         // console.log("please update this user",id,updateuser)
         const result = await assignmentDB.updateOne(filter, updateDoc, options);
+        res.send(result)
+    })
+
+    app.put("/givemark/:id",verifyToken, async(req,res)=>{
+        const id=req.params.id
+        const user=req.body
+        const filter = { _id: new ObjectId(id) };
+        const options = { upsert: true };
+        const updateDoc = {
+            $set: {
+              obtainedmarks:user.obtainedmarks,
+              feedback:user.feedback,
+              status:user.status
+            },
+          };
+        // /console.log("please update this user",id,updateuser)
+        const result = await takeassignmentDB.updateOne(filter, updateDoc, options);
         res.send(result)
     })
 

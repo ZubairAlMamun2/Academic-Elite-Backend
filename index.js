@@ -10,7 +10,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 
 app.use(cors({
-    origin: 'http://localhost:5173', // Allow requests from this frontend
+    origin: ['http://localhost:5173','https://academicelit.netlify.app','https://donate-for-people.firebaseapp.com','https://donate-for-people.web.app'], // Allow requests from this frontend
     credentials: true, // Allow cookies and authentication headers
   }));
 app.use(express.json());
@@ -18,7 +18,7 @@ app.use(cookieParser());
 
 const verifyToken = (req, res, next) => {
     const token=req?.cookies?.token
-    console.log('This is token',{token})
+    // console.log('This is token',{token})
     if (!token) {
         return res.status(401).send({ message: 'unauthorized access' });
     }
@@ -59,11 +59,13 @@ async function run() {
         const user=req.body;
         const token=jwt.sign(user,process.env.JWT_SECRET,{expiresIn:'1h'})
         // console.log('tis is dskdl',token )
-        res.cookie('token', token, { httpOnly: true, secure:false });
+        res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "strict", });
         res.send({success:true});
     })
     app.post('/logout',(req,res)=>{
-        res.clearCookie('token',  { httpOnly: true, secure:false });
+        res.clearCookie('token',  { httpOnly: true, secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "strict",});
         res.send({success:true});
     })
 
@@ -76,7 +78,7 @@ async function run() {
     app.get("/pendingassignment",verifyToken,async(req,res)=>{
         const cursor = takeassignmentDB.find({});
         const allValues = await cursor.toArray();
-        console.log('cookies',req.cookies)
+        // console.log('cookies',req.cookies)
 
         res.send(allValues)
     })
@@ -111,9 +113,9 @@ async function run() {
 
 
     app.post("/addnewassignment",verifyToken,async(req,res)=>{
-        const addCampaign =req.body;
+        const assignment =req.body;
         // console.log(addCampaign)
-        const result = await assignmentDB.insertOne(addCampaign);
+        const result = await assignmentDB.insertOne(assignment);
         res.send(result)
     })
 
@@ -162,7 +164,7 @@ async function run() {
 
     app.delete("/assignment/:id",async(req,res)=>{
         const id=req.params.id
-        console.log("please delete this user",id)
+        // console.log("please delete this user",id)
         const query = { _id: new ObjectId(id) };
         const deleteResult = await assignmentDB.deleteOne(query);
 
@@ -174,32 +176,29 @@ async function run() {
     // new route
 
     app.get('/assignments', async (req, res) => {
-        try {
+       
             const { type, search } = req.query;
 
         let query = {};
         if (type) query.type = type;
         if (search) {
-            query.title = { $regex: search, $options: "i" }; // Case-insensitive search
+            query.title = { $regex: search, $options: "i" }; 
         }
 
         const assignments = await assignmentDB.find(query).toArray();
         res.status(200).send(assignments);
-        console.log(assignments)
-        } catch (error) {
-            console.error(error);
-            res.status(500).send({ message: 'Error retrieving assignments' });
-        }
+        //console.log(assignments)
+       
     });
 
 
 
     
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -210,7 +209,7 @@ run().catch(console.dir);
 
 
 app.get("/",(req,res)=>{
-    res.send("Crowdcube server is running")
+    res.send("Academic Elite server is running")
 })
 
 app.listen(port,()=>{

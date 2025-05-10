@@ -17,4 +17,5 @@
 - We also use useContext Api
 - Data storage in mongodb
 - using JWT verification
+- using firebase 
 - etc..
